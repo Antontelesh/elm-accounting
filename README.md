@@ -1,6 +1,6 @@
 # elm-accounting
 
-Test accounting application written in [Elm](elm-lang.org) for learning purposes.
+Test accounting application written in [Elm](http://elm-lang.org) for learning purposes.
 
 To try it you first need to install and then compile.
 
