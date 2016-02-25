@@ -6,7 +6,7 @@ To try it you first need to install and then compile.
 
 ## Installing
 
-To install all dependencies siply run
+To install all dependencies simply run
 
 ```
 npm install
