@@ -2,13 +2,26 @@ module Accounting (view, update, init) where
 
 import Html exposing (div)
 import Html.Attributes exposing (class)
+import String
+import Result
 import Effects
+import Debug
 
 import Accounting.Balance as Balance
 import Accounting.PaymentList as PaymentList
 import Accounting.PaymentForm as PaymentForm
 import Accounting.Interfaces exposing (..)
 
+type alias Model =
+  { payments: List Payment
+  , newPayment: PaymentForm.Model
+  }
+
+type Action
+  = NoOp
+  | AddPayment Payment
+  | RemovePayment Id
+  | Form PaymentForm.Action
 
 initialPayments : List Payment
 initialPayments =
@@ -24,9 +37,6 @@ payment id type' amount description date =
   , date = date
   }
 
-emptyPayment id =
-  payment id Supply 0 "" ""
-
 inc = (+) 1
 
 nextId : List Payment -> Id
@@ -35,21 +45,38 @@ nextId = Maybe.withDefault 0 << Maybe.map inc << List.maximum << List.map .id
 initialModel : Model
 initialModel =
   { payments = initialPayments
-  , newPayment = emptyPayment <| List.length initialPayments
+  , newPayment = PaymentForm.init <| nextId initialPayments
   }
 
 
 init : (Model, Effects.Effects Action)
 init = (initialModel, Effects.none)
 
+paymentListView : Signal.Address Action -> List Payment -> Html.Html
+paymentListView address payments =
+  let
+    context = PaymentList.Context
+      (Signal.forwardTo address RemovePayment)
+  in
+    PaymentList.view context payments
+
+formView : Signal.Address Action -> PaymentForm.Model -> Html.Html
+formView address model =
+  let
+    context = PaymentForm.Context
+      (Signal.forwardTo address Form)
+      (Signal.forwardTo address AddPayment)
+  in
+    PaymentForm.view context model
+
 
 view : Signal.Address Action -> Model -> Html.Html
 view address model =
   div
     [ class "accounting" ]
-    [ Balance.view address model
-    , PaymentList.view address model
-    , PaymentForm.view address model
+    [ Balance.view model.payments
+    , paymentListView address model.payments
+    , formView address model.newPayment
     ]
 
 
@@ -58,14 +85,14 @@ updateModel action model =
     NoOp ->
       model
 
-    AddPayment ->
+    AddPayment payment ->
       let
-        payments = model.payments ++ [model.newPayment]
-        newPayment = emptyPayment <| nextId payments
+        payments = model.payments ++ [ payment ]
+        newPayment = PaymentForm.init <| nextId payments
       in
         { model |
-            payments = payments,
-            newPayment = newPayment
+            payments = payments
+          , newPayment = newPayment
         }
 
     RemovePayment id ->
@@ -73,13 +100,21 @@ updateModel action model =
         payments = List.filter (\p -> p.id /= id) model.payments
       }
 
-    UpdateDate date ->
+    Form formAction ->
       let
-        oldPayment = model.newPayment
-        newPayment = { oldPayment | date = date }
+        ( newPayment , _ ) = PaymentForm.update formAction model.newPayment
       in
         { model | newPayment = newPayment }
 
+
+
 update : Action -> Model -> (Model, Effects.Effects Action)
 update action model =
-  (updateModel action model, Effects.none)
+  let
+    change = Debug.log "Change"
+      { prevModel = model
+      , action = action
+      , nextModel = updateModel action model
+      }
+  in
+    (change.nextModel, Effects.none)

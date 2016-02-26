@@ -8,10 +8,10 @@ import Accounting.Interfaces exposing (..)
 import Accounting.Utils exposing (..)
 
 
-view : Signal.Address Action -> Model -> Html.Html
-view address model =
+view : List Payment -> Html.Html
+view payments =
   let
-    balance' = balance model.payments
+    balance' = balance payments
     color = if balance' > 0 then "green" else if balance' < 0 then "red" else "black"
   in
     h2

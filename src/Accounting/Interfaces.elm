@@ -4,23 +4,16 @@ type PaymentType
   = Supply
   | Withdraw
 
-type alias Payment =
-  { id: Id
-  , type': PaymentType
+type alias PaymentData =
+  { type': PaymentType
   , amount: Float
   , description: String
   , date: String
   }
 
+type alias WithId a =
+  { a | id: Id }
+
+type alias Payment = WithId PaymentData
+
 type alias Id = Int
-
-type alias Model =
-  { payments: List Payment
-  , newPayment: Payment
-  }
-
-type Action
-  = NoOp
-  | AddPayment
-  | RemovePayment Id
-  | UpdateDate String

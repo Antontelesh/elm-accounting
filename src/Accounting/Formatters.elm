@@ -6,15 +6,21 @@ import Date
 formatAmount : Float -> String
 formatAmount amount =
   let
-    str = toString amount
-    parts = String.split "." str
-    maybeWholes = List.head parts
-    maybeCoins = List.head (List.drop 1 parts)
-    wholes = Maybe.withDefault "0" maybeWholes
-    coins = Maybe.withDefault "00" maybeCoins
-    fullCoins = String.padRight 2 '0' coins
+    parts = amount
+      |> toString
+      |> String.split "."
+
+    wholes = parts
+      |> List.head
+      |> Maybe.withDefault "0"
+
+    coins = parts
+      |> List.drop 1
+      |> List.head
+      |> Maybe.withDefault "00"
+      |> String.padRight 2 '0'
   in
-    wholes ++ "," ++ fullCoins
+    wholes ++ "," ++ coins
 
 
 

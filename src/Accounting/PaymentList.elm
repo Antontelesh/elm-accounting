@@ -1,4 +1,4 @@
-module Accounting.PaymentList (view) where
+module Accounting.PaymentList (view, Context) where
 
 import Html exposing (div, h2, table, thead, tbody, tfoot, tr, td, text, button)
 import Html.Attributes exposing (style, class, key, type')
@@ -8,6 +8,9 @@ import Accounting.Formatters exposing (formatAmount, formatDate)
 import Accounting.Interfaces exposing (..)
 import Accounting.Utils exposing (..)
 
+type alias Context =
+  { remove: Signal.Address Id
+  }
 
 amountText : Bool -> Float -> String
 amountText isShown amount =
@@ -16,50 +19,42 @@ amountText isShown amount =
     else " "
 
 
-view : Signal.Address Action -> Model -> Html.Html
-view address model =
+view : Context -> List Payment -> Html.Html
+view context payments =
   div
     [ class "payment-list" ]
     [ h2 [] [text "Payments"]
     , table
         [ class "payment-list__list"
-        , style [("width", "100%")]]
-        (List.concat
-          [
-            [ thead
-                [ style [ ("font-weight", "bold") ] ]
-                [ tr
-                    []
-                    [ td [] [ text "Date" ]
-                    , td [] [ text "Description" ]
-                    , td [] [ text "Income" ]
-                    , td [] [ text "Outcome" ]
-                    ]
-                ]
-            ]
-          , [ tbody
+        , style [("width", "100%")]
+        ]
+        [ thead
+            [ style [ ("font-weight", "bold") ] ]
+            [ tr
                 []
-                (List.map (itemView address) model.payments)
-            ]
-          , [
-              tfoot
-                [ style [("font-weight", "bold")]]
-                [ tr
-                    []
-                    [ td [] [ text "Total" ]
-                    , td [] [ text " " ]
-                    , td [] [ text << formatAmount <| totalIncome model.payments ]
-                    , td [] [ text << formatAmount <| totalOutcome model.payments ]
-                    ]
+                [ td [] [ text "Date" ]
+                , td [] [ text "Description" ]
+                , td [] [ text "Income" ]
+                , td [] [ text "Outcome" ]
                 ]
             ]
-          ])
+        ]
+        , tbody
+            []
+            (List.map (itemView context) payments)
+        , tfoot
+            [ style [("font-weight", "bold")]]
+            [ tr
+                []
+                [ td [] [ text "Total" ]
+                , td [] [ text " " ]
+                , td [] [ text << formatAmount <| totalIncome payments ]
+                , td [] [ text << formatAmount <| totalOutcome payments ]
+                ]
+            ]
+        ]
 
-    ]
-
-
-itemView : Signal.Address Action -> Payment -> Html.Html
-itemView address payment =
+itemView context payment =
   let
     supplyAmount =
       amountText (isSupply payment) payment.amount
@@ -87,7 +82,7 @@ itemView address payment =
           []
           [ button
               [ type' "button"
-              , onClick address (RemovePayment payment.id)
+              , onClick context.remove payment.id
               ]
               [ text "×" ]
           ]
